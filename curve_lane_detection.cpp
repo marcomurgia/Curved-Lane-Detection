@@ -66,7 +66,13 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
 
     /// First CROP image
     float ratio=((float)input.rows/input.cols);
-    float factor_roi=ratio*((float)16/3);
+    float factor_roi;
+    if(ratio<0.65){ //ratio==0.5625 | ratio!=0.75
+    factor_roi=ratio*((float)16/3); //9:16
+    } else {
+    factor_roi=ratio*((float)13/3); //3:4
+    }
+
     Rect roi_1;
     roi_1.x = 0;
     roi_1.y = input.size().height- input.size().height/factor_roi;
@@ -82,8 +88,15 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
 
     // The 4 points that select quadilateral on the input , from top-left in clockwise order
     // These four pts are the sides of the rect box used as input
-    float input_factor=ratio*((float)1000/0.5625);
-    float output_factor=ratio*((float)600/0.5625);
+    float input_factor, output_factor;
+    if(ratio<0.65){
+        input_factor=ratio*((float)1000/ratio); //9:16
+        output_factor=ratio*((float)600/ratio); //9:16
+    } else {
+        input_factor=ratio*((float)1000/ratio);  //3:4
+        output_factor=ratio*((float)100/ratio);  //3:4
+    }
+
     inputQuad[0] = Point2f( 0,0 );
     inputQuad[1] = Point2f( input_crop.cols, 0);
     inputQuad[2] = Point2f( input_crop.cols + input_factor, input_crop.rows);
@@ -126,7 +139,13 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
     //imshow("Sobel operator", sobel);
 
     /// Second CROP image
-    float factor_roi_2=ratio*((float)64/15);
+    float factor_roi_2;
+    if(ratio<0.65){
+    factor_roi_2=ratio*((float)64/15); //9:16
+    } else {
+    factor_roi_2=ratio*((float)50/15); //3:4
+    }
+
     Rect roi_2;
     roi_2.x = (sobel.size().width/2) - (sobel.size().width/(2*factor_roi_2));
     roi_2.y = 0;
@@ -407,7 +426,7 @@ int main( int argc, char** argv ){
       cerr << "ERROR! Unable to open camera\n";
       return -1;
     }
-    cout << "Start grabbing" << endl
+    cout << "Start" << endl
          << "Press any key to terminate" << endl;
     //loop infinito
     for (;;)
@@ -422,7 +441,7 @@ int main( int argc, char** argv ){
          break;
       }
 
-      // Curve lane frame
+      /// Curve lane frame
       //Mat o_frame;
       curve_lane_frame(frame, o_frame);
       waitKey(5);
