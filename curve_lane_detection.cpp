@@ -47,22 +47,12 @@ void inv_warp(Mat &input, Mat &output, float &input_factor, float &output_factor
     // Get the Perspective Transform Matrix i.e. lambda
     Mat lambda = getPerspectiveTransform( inputQuad, outputQuad );
     warpPerspective(input,output,lambda,output.size() );
-
-    //imshow("Input",input);
-    //imshow("Output",output);
 }
 
 void curve_lane_frame(Mat &input_frame, Mat &output_frame){
 
     /// Load the image
-    //Mat input = imread( argv[1], 1 );
     Mat input=input_frame;
-    /*if( input.empty() )
-    {
-        return EXIT_FAILURE;
-    }*/
-
-    //imshow("input", input);
 
     /// First CROP image
     float ratio=((float)input.rows/input.cols);
@@ -80,7 +70,6 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
     roi_1.height = input.size().height/factor_roi;
 
     Mat input_crop = input(roi_1);
-    //imshow("Input crop",input_crop);
 
     /// WARP the image
     // Input and Output Quadilateral or Image plane coordinates
@@ -113,9 +102,6 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
     Mat warp;
     warpPerspective(input_crop, warp, lambda, warp.size() );
 
-    //imshow("Warp", warp);
-    //imwrite("Warp.jpg",input_crop);
-
     /// Sobel operator
     Mat gaussian, gaussian_gray, sobel;
 
@@ -136,7 +122,6 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
 
     // Total Gradient (approximate)
     addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, sobel);
-    //imshow("Sobel operator", sobel);
 
     /// Second CROP image
     float factor_roi_2;
@@ -153,8 +138,6 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
     roi_2.height = sobel.size().height;
 
     Mat src = sobel(roi_2);
-    //imshow("Sobel crop", src);
-    //imwrite("noises_cropped.png", crop);
 
     /// Draw the histograms
     Mat u_hist;
@@ -175,9 +158,6 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
               Point( (i), hist_h - (u_hist.at<double>(i)) ),
               Scalar( 255,0 , 0), 2, 8, 0  );
     }
-
-    // Display
-    //imshow("calcHist Demo", histImage );
 
     /// Setting for the drawing window
     // Find peaks of left and right halves
@@ -221,8 +201,6 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
         }
     }
 
-    //imshow("Filtered image", src );
-
     findNonZero(src , nonZeroCoord);
     int dim_nonzero = nonZeroCoord.rows;
     int nonzerox[dim_nonzero], nonzeroy[dim_nonzero];
@@ -262,8 +240,6 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
 
         rectangle(src_r, p1, p2, Scalar(0, 255, 0), 2, 8, 0);
         rectangle(src_r, p3, p4, Scalar(0, 255, 0), 2, 8, 0);
-
-        //imshow("Windows",src_r);
 
         // Identify the nonzero pixels in x and y within the window
         int i_left=0,i_right=0;
@@ -328,7 +304,6 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
 
         circle(src_r,pt2,0.1,Scalar(0,0,255), 1, 8,0);
     }
-    //imshow("Window and Fit color", src_r);
 
     /// Curve fit
     Mat leftx_m = Mat((i_lane_left), 1, CV_32FC1, &leftx);
@@ -354,7 +329,6 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
     }
     polylines(src_r, pt_l, false, Scalar(0,200,255), 3, 8,0);
     polylines(src_r, pt_r, false, Scalar(0,200,255), 3, 8,0);
-    //imshow("Curve fit", src_r);
 
     /// Fill lane area
     vector<vector<Point> > vpts, vpts1;
@@ -364,22 +338,18 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
     Mat lane_area( src.size(), CV_8UC3);
     fillPoly(lane_area, vpts, Scalar(255,200,150),8,0);
     floodFill(lane_area, Point(0,0), Scalar(255,200,150));
-    //imshow("area",lane_area);
 
     Mat lane_area1( src.size(), CV_8UC3);
     fillPoly(lane_area1, vpts1, Scalar(255,200,150),8,0);
     floodFill(lane_area1, Point(0,0), Scalar(255,200,150));
-    //imshow("area 2",lane_area1);
 
     Mat area_final=lane_area-lane_area1;
-    //imshow("area final",area_final);
 
     Mat curve_fit( src.size(), CV_8UC3);
     polylines(curve_fit, pt_l, false, Scalar(0,255,255), 3, 8,0);
     polylines(curve_fit, pt_r, false, Scalar(0,255,255), 3, 8,0);
 
     curve_fit=curve_fit+area_final;
-    //imshow("Curve", curve_fit);
 
     // Traslate polylines
     int width_first=input.cols;
@@ -387,21 +357,16 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
     Mat curve_fit_traslate, warpGround_x;
     warpGround_x =(Mat_<float>(2,3) << 1, 0, traslate_x, 0, 1, 0);
     warpAffine(curve_fit,curve_fit_traslate, warpGround_x,Size(input.cols,input_crop.rows));
-    //imshow("Curve traslate", curve_fit_traslate);
 
     Mat inv_curve_fit;
     inv_warp(curve_fit_traslate, inv_curve_fit, input_factor, output_factor);
-    //imshow("Inverse curve", inv_curve_fit);
 
     int traslate_y=input.rows-inv_curve_fit.rows;
     Mat inv_curve_fit_2, warpGround_y;
     warpGround_y =(Mat_<float>(2,3) << 1, 0, 0, 0, 1, traslate_y);
     warpAffine(inv_curve_fit,inv_curve_fit_2, warpGround_y,Size(input.cols,input.rows));
-    //imshow("Inverse curve 2", inv_curve_fit_2);
 
     Mat final_image=inv_curve_fit_2+input;
-    //imshow("Final", final_image);
-    //imwrite("final.jpg", final_image);
 
     output_frame=final_image;
 
@@ -410,48 +375,42 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
 
 int main( int argc, char** argv ){
 
-    //Inizializzo VideoCapture
+    // Initialize VideoCapture and open the default webcam
     VideoCapture cap;
-
-    // Apro la camera di default
     cap.open(0);
 
     int deviceID = 0;
-    //Legge automaticamente api di default
+    // Automatically reads api by default
     int apiID = CAP_ANY;
-    //Apro la camera con api selezionato
+    // Open the room with the selected api
     cap.open(deviceID + apiID);
-    //Controllo se e aperta se no stampo errore
+    //Check if it is open, if not mold error
     if (!cap.isOpened()) {
       cerr << "ERROR! Unable to open camera\n";
       return -1;
     }
     cout << "Start" << endl
          << "Press any key to terminate" << endl;
-    //loop infinito
+
     for (;;)
     {
       Mat frame,o_frame;
-      //Aspetto il nuovo frame dalla camera e lo conserva in frame
+      // Wait for the new frame from the webcam and keep it in frame
       cap.read(frame);
 
-      //Controlla se e andato tutto bene
       if (frame.empty()) {
-         cerr << "ERROR! blank frame grabbed\n";
+         cerr << "ERROR! Blank frame grabbed\n";
          break;
       }
 
       /// Curve lane frame
-      //Mat o_frame;
       curve_lane_frame(frame, o_frame);
       waitKey(5);
 
-      //Guarda il live e aspetta il tasto da tastiera con timeout per vare vedere le immagini
-      //imshow("Live", frame);
+      // Watch the live webcam
       imshow("Live", o_frame);
       if (waitKey(5) >= 0)
         break;
      }
  return 0;
-
 }
