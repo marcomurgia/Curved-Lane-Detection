@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 2.8)
+project(cmake_curve)
+find_package( OpenCV REQUIRED)
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+add_executable( cmake_curve curve_lane_detection.cpp )
+target_link_libraries( cmake_curve  ${OpenCV_LIBS} )
