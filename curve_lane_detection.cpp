@@ -1,8 +1,15 @@
 #include<opencv2/opencv.hpp>
+#define avarage_ratio 0.65 // between 9:16 and 3:4
+#define first_factor_9_16 16/3
+#define first_factor_3_4 13/3
+#define input_factor_both 1000 //both 9:16 and 3:4
+#define output_factor_9_16 600
+#define output_factor_3_4 100
+#define second_factor_9_16 64/15
+#define second_factor_3_4 50/15
 
 using namespace cv;
 using namespace std;
- 
 
 void cvPolyfit(Mat &src_x, Mat &src_y, Mat &dst, int order)
 {
@@ -57,10 +64,10 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
     /// First CROP image
     float ratio=((float)input.rows/input.cols);
     float factor_roi;
-    if(ratio<0.65){ //ratio==0.5625 | ratio!=0.75
-    factor_roi=ratio*((float)16/3); //9:16
+    if(ratio<avarage_ratio){ //ratio==0.5625 | ratio!=0.75
+    factor_roi=ratio*((float)first_factor_9_16); //9:16
     } else {
-    factor_roi=ratio*((float)13/3); //3:4
+    factor_roi=ratio*((float)first_factor_3_4); //3:4
     }
 
     Rect roi_1;
@@ -77,14 +84,13 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
 
     // The 4 points that select quadilateral on the input , from top-left in clockwise order
     // These four pts are the sides of the rect box used as input
-    float input_factor, output_factor;
-    if(ratio<0.65){
-        input_factor=ratio*((float)1000/ratio); //9:16
-        output_factor=ratio*((float)600/ratio); //9:16
+    float  input_factor,output_factor;
+    if(ratio<avarage_ratio){
+        output_factor=output_factor_9_16; //9:16
     } else {
-        input_factor=ratio*((float)1000/ratio);  //3:4
-        output_factor=ratio*((float)100/ratio);  //3:4
+        output_factor=output_factor_3_4; //3:4
     }
+    input_factor=input_factor_both;
 
     inputQuad[0] = Point2f( 0,0 );
     inputQuad[1] = Point2f( input_crop.cols, 0);
@@ -125,10 +131,10 @@ void curve_lane_frame(Mat &input_frame, Mat &output_frame){
 
     /// Second CROP image
     float factor_roi_2;
-    if(ratio<0.65){
-    factor_roi_2=ratio*((float)64/15); //9:16
+    if(ratio<avarage_ratio){
+    factor_roi_2=ratio*((float)second_factor_9_16); //9:16
     } else {
-    factor_roi_2=ratio*((float)50/15); //3:4
+    factor_roi_2=ratio*((float)second_factor_3_4); //3:4
     }
 
     Rect roi_2;
