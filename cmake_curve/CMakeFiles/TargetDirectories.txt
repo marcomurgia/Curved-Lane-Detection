@@ -1,0 +1,3 @@
+/home/marco/Curve_lane/cmake_curve/CMakeFiles/rebuild_cache.dir
+/home/marco/Curve_lane/cmake_curve/CMakeFiles/cmake_curve.dir
+/home/marco/Curve_lane/cmake_curve/CMakeFiles/edit_cache.dir
