@@ -1,10 +1,6 @@
-all: CurveLaneDetection
+CC=g++
+CONFIG = `pkg-config --cflags --libs opencv4`
 
-hello: main.o CurveLaneDetection.o
-	g++ main.o CurveLaneDetection.o -o CurveLaneDetection `pkg-config --cflags --libs opencv4`
+CurveLaneDetection: main.cpp CurveLaneDetection.cpp
+	$(CC) main.cpp CurveLaneDetection.cpp -o CurveLaneDetection $(CONFIG)
 
-main.o: main.cpp
-	g++ -c main.cpp `pkg-config --cflags --libs opencv4`
-
-CurveLaneDetection.o: CurveLaneDetection.cpp
-	g++ -c CurveLaneDetection.cpp `pkg-config --cflags --libs opencv4`
