@@ -2,29 +2,45 @@
 using namespace cv;
 using namespace std;
 
+#ifndef _CURVE_LANE_FRAME_H_
+#define _CURVE_LANE_FRAME_H_
+
 class CurveLaneFrame
 {
 private:
+
     Mat input;
-    Mat  input_crop, warp, sobel, src, u_hist;
-    float ratio = ((float)input.rows/input.cols);
+    Mat input_crop;
+    Mat warp;
+    Mat sobel;
+    Mat src;
+    Mat u_hist;
 
+    float ratio;
 
-    void first_crop_image(Mat &input, float &ratio, Mat &input_crop);
-    void warp_image(float &ratio, Mat &input_crop,  float &output_factor, Mat &warp);
-    void sobel_operator(Mat &warp, Mat &sobel);
-    void second_crop_image(float &ratio,Mat &sobel, Mat &src);
-    void histogram(Mat &src, Mat &u_hist);
-    void curve_fit_and_lane(Mat &input, Mat &u_hist, Mat &src, Mat &input_crop, float &output_factor, Mat &output_frame);
+    void first_crop_image();
+    void warp_image();
+    void sobel_operator();
+    void second_crop_image();
+    void histogram();
+    void curve_fit_and_lane();
+
+private:
+
+    Mat output_frame;
 
 public:
-    Mat frame;
-    Mat output_frame;
-    CurveLaneFrame(){
-        //cout <<"prova"<<endl;
-        input=frame;
+
+    //float ratio=((float)input.rows/input.cols);
+
+    CurveLaneFrame(float ratio = 0.75){
+        this->ratio = ratio;
     };
 
-    ~CurveLaneFrame();
+    virtual ~CurveLaneFrame();
 
+    //void FindLane(const Mat &frame,  Mat &output_frame);
+    void FindLane(const Mat &frame);
 };
+
+#endif

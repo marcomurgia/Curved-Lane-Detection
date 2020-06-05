@@ -1,6 +1,7 @@
-#include<opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 #include "CurveLaneFrame.h"
-#define avarage_ratio 0.65 // between 9:16 and 3:4
+
+#define average_ratio 0.65 // between 9:16 and 3:4
 #define first_factor_9_16 16/3
 #define first_factor_3_4 13/3
 #define input_factor 1000  //both 9:16 and 3:4
@@ -13,65 +14,65 @@ using namespace cv;
 using namespace std;
 
 
-void CurveLaneFrame::first_crop_image(Mat &input, float &ratio, Mat &input_crop)
+void CurveLaneFrame::first_crop_image()
 {
-    //ratio=((float)input.rows/input.cols);
-    float factor_roi;
-    if(ratio<avarage_ratio){
-    factor_roi=ratio*((float)first_factor_9_16); //9:16
+    float factor_roi = 0.0;
+    if(this->ratio < average_ratio){
+        factor_roi = this->ratio * ((float)first_factor_9_16); //9:16
     } else {
-    factor_roi=ratio*((float)first_factor_3_4); //3:4
+        factor_roi = this->ratio * ((float)first_factor_3_4); //3:4
     }
+
     Rect roi_1;
-    roi_1.x = 0;
-    roi_1.y = input.size().height- input.size().height/factor_roi;
-    roi_1.width = input.size().width;
-    roi_1.height = input.size().height/factor_roi;
+    roi_1.x      = 0;
+    roi_1.y      = this->input.size().height - this->input.size().height / factor_roi;
+    roi_1.width  = this->input.size().width;
+    roi_1.height = this->input.size().height / factor_roi;
 
     //Mat input_crop = input(roi_1);
-    input_crop = input(roi_1);
+    this->input_crop = this->input(roi_1);
     //imshow("input_crop", input_crop );
 }
 
-void CurveLaneFrame::warp_image(float &ratio, Mat &input_crop, float &output_factor, Mat &warp)
+void CurveLaneFrame::warp_image()
 {
     // Input and Output Quadilateral or Image plane coordinates
     Point2f inputQuad[4], outputQuad[4];
 
     // The 4 points that select quadilateral on the input , from top-left in clockwise order
     // These four pts are the sides of the rect box used as input
-    //float  input_factor,output_factor;
+    float  output_factor;
 
-    if(ratio<avarage_ratio){
-        output_factor=output_factor_9_16; //9:16
+    if(this->ratio<average_ratio){
+        output_factor = output_factor_9_16; //9:16
     } else {
-        output_factor=output_factor_3_4; //3:4
+        output_factor = output_factor_3_4; //3:4
     }
     //input_factor=input_factor_both;
 
     inputQuad[0] = Point2f( 0,0 );
-    inputQuad[1] = Point2f( input_crop.cols, 0);
-    inputQuad[2] = Point2f( input_crop.cols + input_factor, input_crop.rows);
-    inputQuad[3] = Point2f( -input_factor,input_crop.rows);
+    inputQuad[1] = Point2f( this->input_crop.cols, 0);
+    inputQuad[2] = Point2f( this->input_crop.cols + input_factor, this->input_crop.rows);
+    inputQuad[3] = Point2f( -input_factor, this->input_crop.rows);
 
     // The 4 points where the mapping is to be done , from top-left in clockwise order
     outputQuad[0] = Point2f( -output_factor, 0 );
-    outputQuad[1] = Point2f( input_crop.cols+output_factor, 0);
-    outputQuad[2] = Point2f( input_crop.cols,input_crop.rows);
-    outputQuad[3] = Point2f( 0,input_crop.rows);
+    outputQuad[1] = Point2f( this->input_crop.cols + output_factor, 0);
+    outputQuad[2] = Point2f( this->input_crop.cols, this->input_crop.rows);
+    outputQuad[3] = Point2f( 0, this->input_crop.rows);
 
     // Get the Perspective Transform Matrix and apply it to the input image
     Mat lambda = getPerspectiveTransform( inputQuad, outputQuad );
     //Mat warp;
-    warpPerspective(input_crop, warp, lambda, warp.size() );
+    warpPerspective(this->input_crop, this->warp, lambda, this->warp.size() );
 }
 
-void CurveLaneFrame::sobel_operator(Mat &warp, Mat &sobel)
+void CurveLaneFrame::sobel_operator()
 {
     Mat gaussian, gaussian_gray;
 
     // Remove noise by blurring with a Gaussian filter ( kernel size = 3 )
-    GaussianBlur(warp, gaussian, Size(3, 3), 0, 0, BORDER_DEFAULT);
+    GaussianBlur(this->warp, gaussian, Size(3, 3), 0, 0, BORDER_DEFAULT);
     cvtColor(gaussian, gaussian_gray, COLOR_BGR2GRAY); // Convert the image to grayscale
 
     // Sobel with Gradient X and Y
@@ -86,46 +87,46 @@ void CurveLaneFrame::sobel_operator(Mat &warp, Mat &sobel)
     convertScaleAbs(grad_y, abs_grad_y);
 
     // Total Gradient (approximate)
-    addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, sobel);
+    addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, this->sobel);
 }
 
-void CurveLaneFrame::second_crop_image(float &ratio, Mat &sobel, Mat &src)
+void CurveLaneFrame::second_crop_image()
 {
     float factor_roi_2;
-    if(ratio<avarage_ratio){
-    factor_roi_2=ratio*((float)second_factor_9_16); //9:16
+    if(this->ratio<average_ratio){
+        factor_roi_2 = this->ratio*((float)second_factor_9_16); //9:16
     } else {
-    factor_roi_2=ratio*((float)second_factor_3_4); //3:4
+        factor_roi_2 = this->ratio*((float)second_factor_3_4); //3:4
     }
 
     Rect roi_2;
-    roi_2.x = (sobel.size().width/2) - (sobel.size().width/(2*factor_roi_2));
+    roi_2.x = (this->sobel.size().width/2) - (this->sobel.size().width/(2*factor_roi_2));
     roi_2.y = 0;
-    roi_2.width = sobel.size().width/factor_roi_2;
-    roi_2.height = sobel.size().height;
+    roi_2.width  = this->sobel.size().width/factor_roi_2;
+    roi_2.height = this->sobel.size().height;
 
-    src = sobel(roi_2);
+    this->src = this->sobel(roi_2);
 }
 
-void CurveLaneFrame::histogram(Mat &src, Mat &u_hist)
+void CurveLaneFrame::histogram()
 {
     /// Draw the histograms
-    for (int i = 0; i<src.cols; i++)    {
-        u_hist.push_back(sum(src.col(i))[0]);
+    for (int i = 0; i<this->src.cols; i++)    {
+        this->u_hist.push_back(sum(this->src.col(i))[0]);
     }
 
-    int hist_w = src.size().width;
-    int hist_h = src.size().height;
+    int hist_w = this->src.size().width;
+    int hist_h = this->src.size().height;
     Mat histImage( hist_h, hist_w, CV_8UC3, Scalar(0,0,0) );
 
     // Normalize the result to ( 0, histImage.rows )
-    normalize(u_hist, u_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    normalize(this->u_hist, this->u_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
 
     // Draw for each channel
-    for( int i = 1; i<src.size().width; i++ )
+    for( int i = 1; i<this->src.size().width; i++ )
     {
-        line( histImage, Point( (i-1), hist_h - (u_hist.at<double>(i-1)) ),
-              Point( (i), hist_h - (u_hist.at<double>(i)) ),
+        line( histImage, Point( (i-1), hist_h - (this->u_hist.at<double>(i-1)) ),
+              Point( (i), hist_h - (this->u_hist.at<double>(i)) ),
               Scalar( 255,0 , 0), 2, 8, 0  );
     }
 
@@ -176,20 +177,20 @@ void inv_warp(Mat &input, Mat &output,  float &output_factor ){
     warpPerspective(input,output,lambda,output.size() );
 }
 
-void CurveLaneFrame::curve_fit_and_lane(Mat &input, Mat &u_hist, Mat &src, Mat &input_crop, float &output_factor, Mat &output_frame)
+void CurveLaneFrame::curve_fit_and_lane()
 {
     /// Setting for the drawing window
     // Find peaks of left and right halves
-    int midpoint = u_hist.rows/2;
+    int midpoint = this->u_hist.rows/2;
     int max_f=0, max_f_1=0, max_loc_f,max_loc_f_1;
     int leftx_base, rightx_base;
     for (int i=0; i<midpoint; i++) {
-        if (u_hist.at<double>(i)>=max_f){
-            max_f=u_hist.at<double>(i);
+        if (this->u_hist.at<double>(i) >= max_f){
+            max_f = this->u_hist.at<double>(i);
             max_loc_f=i;
         }
-        if (u_hist.at<double>(i+midpoint)>=max_f_1){
-            max_f_1=u_hist.at<double>(i+midpoint);
+        if (this->u_hist.at<double>(i+midpoint) >= max_f_1){
+            max_f_1 = this->u_hist.at<double>(i+midpoint);
             max_loc_f_1=i+midpoint;
         }
     }
@@ -199,7 +200,7 @@ void CurveLaneFrame::curve_fit_and_lane(Mat &input, Mat &u_hist, Mat &src, Mat &
 
     //Set height of windows
     int nwindows=9;
-    int window_height=src.rows/nwindows;
+    int window_height = this->src.rows/nwindows;
 
     //Identify the x and y positions of all nonzero pixels in the image
     Mat nonZeroCoord;
@@ -210,17 +211,17 @@ void CurveLaneFrame::curve_fit_and_lane(Mat &input, Mat &u_hist, Mat &src, Mat &
     Vec1b threshold=30;
     Vec1b temp;
 
-    for(int i = 0; i < src.rows; i++)
+    for(int i = 0; i < this->src.rows; i++)
     {
-        for(int j = 0; j < src.cols; j++)
+        for(int j = 0; j < this->src.cols; j++)
         {
-            temp=src.at< Vec<uchar, 1> >(i,j);
+            temp = this->src.at< Vec<uchar, 1> >(i,j);
             if(temp[0]<threshold[0])
-                src.at< Vec<uchar, 1> >(i,j)=0;
+                this->src.at< Vec<uchar, 1> >(i,j)=0;
         }
     }
 
-    findNonZero(src , nonZeroCoord);
+    findNonZero(this->src , nonZeroCoord);
     int dim_nonzero = nonZeroCoord.rows;
     int nonzerox[dim_nonzero], nonzeroy[dim_nonzero];
 
@@ -239,18 +240,18 @@ void CurveLaneFrame::curve_fit_and_lane(Mat &input, Mat &u_hist, Mat &src, Mat &
     right_lane_inds=(int *) malloc(dim_tot * sizeof(int));
 
     //Step through the windows one by one
-    int margin=src.cols/11; // half window width
-    Mat src_r = Mat::zeros(src.rows, src.cols, CV_32FC3);
+    int margin=this->src.cols/11; // half window width
+    Mat src_r = Mat::zeros(this->src.rows, this->src.cols, CV_32FC3);
 
     /// Draw windows
 
     for (int n=0; n<nwindows; n++) {
 
-        int win_y_low = src.rows - (n+1)*window_height;
-        int win_y_high = src.rows - n*window_height;
-        int win_xleft_low = leftx_current - margin;
-        int win_xleft_high = leftx_current + margin;
-        int win_xright_low = rightx_current - margin;
+        int win_y_low       = this->src.rows - (n+1)*window_height;
+        int win_y_high      = this->src.rows - n*window_height;
+        int win_xleft_low   = leftx_current - margin;
+        int win_xleft_high  = leftx_current + margin;
+        int win_xright_low  = rightx_current - margin;
         int win_xright_high = rightx_current + margin;
 
         //if draw_windows==True
@@ -338,9 +339,10 @@ void CurveLaneFrame::curve_fit_and_lane(Mat &input, Mat &u_hist, Mat &src, Mat &
     cvPolyfit(lefty_m, leftx_m, coef_left, fit_order);
     cvPolyfit(righty_m, rightx_m, coef_right, fit_order);
 
-    vector<Point> pt_l(src.rows),pt_r(src.rows);
-    vector<Point> pt_r_inv(src.rows);
-    for (int i=0; i<src.rows; i++) {
+    vector<Point> pt_l(this->src.rows), pt_r(this->src.rows);
+    vector<Point> pt_r_inv(this->src.rows);
+
+    for (int i=0; i<this->src.rows; i++) {
         pt_l[i].y=i;
         pt_l[i].x=(coef_left.at<float>(2))*i*i+(coef_left.at<float>(1))*i+(coef_left.at<float>(0));
 
@@ -356,44 +358,61 @@ void CurveLaneFrame::curve_fit_and_lane(Mat &input, Mat &u_hist, Mat &src, Mat &
     vpts.push_back(pt_r);
     vpts1.push_back(pt_l);
 
-    Mat lane_area( src.size(), CV_8UC3);
+    Mat lane_area( this->src.size(), CV_8UC3);
     fillPoly(lane_area, vpts, Scalar(255,200,150),8,0);
     floodFill(lane_area, Point(0,0), Scalar(255,200,150));
 
-    Mat lane_area1( src.size(), CV_8UC3);
+    Mat lane_area1( this->src.size(), CV_8UC3);
     fillPoly(lane_area1, vpts1, Scalar(255,200,150),8,0);
     floodFill(lane_area1, Point(0,0), Scalar(255,200,150));
 
     Mat area_final=lane_area-lane_area1;
 
-    Mat curve_fit( src.size(), CV_8UC3);
+    Mat curve_fit( this->src.size(), CV_8UC3);
     polylines(curve_fit, pt_l, false, Scalar(0,255,255), 3, 8,0);
     polylines(curve_fit, pt_r, false, Scalar(0,255,255), 3, 8,0);
 
     curve_fit=curve_fit+area_final;
 
     // Traslate polylines
-    int width_first=input.cols;
+    int width_first=this->input.cols;
     int traslate_x=width_first/2-curve_fit.cols/2;
     Mat curve_fit_traslate, warpGround_x;
     warpGround_x =(Mat_<float>(2,3) << 1, 0, traslate_x, 0, 1, 0);
-    warpAffine(curve_fit,curve_fit_traslate, warpGround_x,Size(input.cols,input_crop.rows));
+    warpAffine(curve_fit,curve_fit_traslate, warpGround_x,Size(this->input.cols,this->input_crop.rows));
+
+    float output_factor;
+    if(this->ratio<average_ratio){
+        output_factor = output_factor_9_16; //9:16
+    } else {
+        output_factor = output_factor_3_4; //3:4
+    }
 
     Mat inv_curve_fit;
     inv_warp(curve_fit_traslate, inv_curve_fit, output_factor);
 
-    int traslate_y=input.rows-inv_curve_fit.rows;
+    int traslate_y = this->input.rows-inv_curve_fit.rows;
     Mat inv_curve_fit_2, warpGround_y;
     warpGround_y =(Mat_<float>(2,3) << 1, 0, 0, 0, 1, traslate_y);
-    warpAffine(inv_curve_fit,inv_curve_fit_2, warpGround_y,Size(input.cols,input.rows));
+    warpAffine(inv_curve_fit,inv_curve_fit_2, warpGround_y,Size(this->input.cols, this->input.rows));
 
-    Mat final_image=inv_curve_fit_2+input;
+    Mat final_image = inv_curve_fit_2 + this->input;
 
-    output_frame=final_image;
-    //imshow("Final", output_frame);
+    this->output_frame=final_image;
+    //imshow("Final", this->output_frame);
 }
 
-CurveLaneFrame::~CurveLaneFrame(){
+CurveLaneFrame::~CurveLaneFrame(){}
+
+void CurveLaneFrame::FindLane(const Mat &frame)
+{
+    this->input = frame;
+    this->first_crop_image();
+    this->warp_image();
+    this->sobel_operator();
+    this->second_crop_image();
+    this->histogram();
+    this->curve_fit_and_lane();
+    //this->output_frame = output_frame;
 
 }
-

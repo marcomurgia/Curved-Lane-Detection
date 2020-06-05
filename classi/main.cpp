@@ -1,4 +1,4 @@
-#include<opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 #include "CurveLaneFrame.h"
 
 using namespace cv;
@@ -23,7 +23,7 @@ int main( int argc, char** argv )
     cout << "Start" << endl
          << "Press any key to terminate" << endl;
 
-    CurveLaneFrame lane_identification;
+    CurveLaneFrame lane_identification(0.75);
 
     for (;;)
     {
@@ -38,18 +38,16 @@ int main( int argc, char** argv )
          break;
       }
 
-    //Mat input=frame;
+      //lane_identification.FindLane(frame);
+      //output_frame = lane_identification.FindLane(frame);
 
-    lane_identification.frame;
-    lane_identification.output_frame;
-    //CurveLaneFrame::CurveLaneFrame(){};
+      waitKey(5);
 
-    waitKey(5);
+      // Watch the live webcam
+      //imshow("Live", output_frame);
 
-    // Watch the live webcam
-    imshow("Live", output_frame);
-    if (waitKey(5) >= 0)
-      break;
+      if (waitKey(5) >= 0)
+          break;
     }
 
     return 0;
