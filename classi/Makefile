@@ -11,15 +11,18 @@ OBJS := main.o \
 
 EXECUTABLE = CurveLaneDetection
 
+OBJDIR = bin
+
 all: $(OBJS) 
-	$(CC) main.o CurveLaneDetection.o -o $(EXECUTABLE) $(LIBS)
+	$(CC) $(OBJDIR)/main.o $(OBJDIR)/CurveLaneDetection.o -o $(EXECUTABLE) $(LIBS)
 
 main.o: main.cpp
 	$(CC) -c main.cpp $(CFLAGS)
+	mv main.o $(OBJDIR)
 
 CurveLaneDetection.o: CurveLaneDetection.cpp
 	$(CC) -c CurveLaneDetection.cpp $(CFLAGS)
-
+	mv CurveLaneDetection.o $(OBJDIR)
 clean:
 	rm -f *.o 
 	rm -f $(EXECUTABLE)
