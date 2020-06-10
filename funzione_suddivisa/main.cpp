@@ -23,8 +23,6 @@ int main( int argc, char** argv )
     cout << "Start" << endl
          << "Press any key to terminate" << endl;
 
-
-    //CurveLaneFrame lane_identification(0.75);
     CurveLaneFrame lane_identification;
 
     for (;;)
@@ -42,10 +40,8 @@ int main( int argc, char** argv )
 
       lane_identification.FindLane(frame, output_frame);
 
-      waitKey(5);
-
       // Watch the live webcam
-      //imshow("Live", output_frame);
+      imshow("Live", output_frame);
 
       if (waitKey(5) >= 0)
           break;

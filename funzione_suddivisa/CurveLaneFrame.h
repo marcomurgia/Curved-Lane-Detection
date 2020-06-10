@@ -15,6 +15,7 @@ private:
     Mat sobel;
     Mat src;
     Mat u_hist;
+    int midpoint;
 
     float ratio;
 
@@ -25,20 +26,11 @@ private:
     void histogram();
     void curve_fit_and_lane();
 
-private:
-
     Mat output_frame;
 
 public:
 
-    //float ratio=((float)input.rows/input.cols);
-
-    /*CurveLaneFrame(float ratio = 0.75){
-        this->ratio = ratio;
-    };*/
-    CurveLaneFrame(){
-
-    };
+    CurveLaneFrame(){ };
 
     virtual ~CurveLaneFrame();
 
