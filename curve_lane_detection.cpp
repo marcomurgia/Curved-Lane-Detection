@@ -411,7 +411,6 @@ int main( int argc, char** argv ){
 
       /// Curve lane frame
       curve_lane_frame(frame, o_frame);
-      waitKey(5);
 
       // Watch the live webcam
       imshow("Live", o_frame);
