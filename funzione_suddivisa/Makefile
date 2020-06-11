@@ -11,15 +11,16 @@ OBJS := main.o \
 
 EXECUTABLE = CurveLaneDetection
 OBJDIR = bin
+OPTIMIZATION = -Os 
 
 all: $(OBJS)
 	$(CC) $(OBJDIR)/main.o $(OBJDIR)/CurveLaneDetection.o -o $(OBJDIR)/$(EXECUTABLE) $(LIBS)
 
 main.o: main.cpp
-	$(CC) -c main.cpp -o $(OBJDIR)/main.o $(CFLAGS)
+	$(CC) -c $(OPTIMIZATION) main.cpp -o $(OBJDIR)/main.o $(CFLAGS)
 
 CurveLaneDetection.o: CurveLaneDetection.cpp
-	$(CC) -c CurveLaneDetection.cpp -o $(OBJDIR)/CurveLaneDetection.o $(CFLAGS)
+	$(CC) -c $(OPTIMIZATION) CurveLaneDetection.cpp -o $(OBJDIR)/CurveLaneDetection.o $(CFLAGS)
 
 clean:
 	rm -f $(OBJDIR)/*.o

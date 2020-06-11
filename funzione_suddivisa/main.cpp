@@ -1,5 +1,7 @@
 #include <opencv2/opencv.hpp>
 #include "CurveLaneFrame.h"
+#include <time.h>
+#include <unistd.h>
 
 using namespace cv;
 using namespace std;
@@ -24,6 +26,8 @@ int main( int argc, char** argv )
          << "Press any key to terminate" << endl;
 
     CurveLaneFrame lane_identification;
+    double media = 0.0;
+    int n = 0;
 
     for (;;)
     {
@@ -38,7 +42,19 @@ int main( int argc, char** argv )
          break;
       }
 
+      clock_t start,end;
+      double tempo;
+      start=clock();
+
       lane_identification.FindLane(frame, output_frame);
+      //usleep(1000000);
+      end=clock();
+      tempo=((double)(end-start))/CLOCKS_PER_SEC;
+
+      cout<<tempo<<endl;
+
+      media += tempo;
+      n++;
 
       // Watch the live webcam
       imshow("Live", output_frame);
@@ -46,6 +62,9 @@ int main( int argc, char** argv )
       if (waitKey(5) >= 0)
           break;
     }
+
+    media /= n;
+    cout<<"media = "<<media<<endl;
 
     return 0;
 }
